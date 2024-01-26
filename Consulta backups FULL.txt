@@ -1,0 +1,42 @@
+--Consulta tudo
+SELECT	s.name, 
+CASE type
+ WHEN 'D' THEN 'FULL'
+ WHEN 'I' THEN 'DIFF'
+ WHEN 'L' THEN 'LOG'
+ END AS Back, 
+MAX(backup_finish_date) as backup_finish_date 
+FROM master..sysdatabases s JOIN msdb.dbo.backupset (NOLOCK) ON database_name = s.name 
+WHERE type = 'D' 
+GROUP BY s.name, type
+order by backup_finish_date;
+
+
+
+-- Consulta max dos backups FULL - Bases de sistema
+SELECT	s.name, 
+CASE type
+ WHEN 'D' THEN 'FULL'
+ WHEN 'I' THEN 'DIFF'
+ WHEN 'L' THEN 'LOG'
+ END AS Back, 
+MAX(backup_finish_date) as backup_finish_date 
+FROM master..sysdatabases s JOIN msdb.dbo.backupset (NOLOCK) ON database_name = s.name 
+WHERE type = 'D' AND s.name IN ('master','model','msdb','dbtrace') 
+GROUP BY s.name, type
+order by backup_finish_date;
+
+
+-- Consulta max dos backups FULL - Bases de aplicação
+SELECT s.name, 
+CASE type
+ WHEN 'D' THEN 'FULL'
+ WHEN 'I' THEN 'DIFF'
+ WHEN 'L' THEN 'LOG'
+END AS Back, 
+MAX(backup_finish_date) as backup_finish_date 
+FROM master..sysdatabases s JOIN msdb.dbo.backupset (NOLOCK) ON database_name = s.name 
+WHERE type = 'D' AND s.name NOT IN ('tempdb','pubs','master','model','msdb','dbtrace')
+GROUP BY s.name, type
+order by backup_finish_date;
+

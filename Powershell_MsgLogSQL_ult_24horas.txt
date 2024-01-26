@@ -1,0 +1,1 @@
+Get-EventLog -After (Get-Date).AddHours(-24) -LogName "Application" -Source "MSSQLSERVER"

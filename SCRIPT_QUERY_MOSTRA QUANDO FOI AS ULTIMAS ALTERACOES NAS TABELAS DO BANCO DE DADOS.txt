@@ -1,0 +1,49 @@
+/* 
+OBJETIVO:  MOSTRAR QUANDO FOI AS ULTIMAS ALTERAÇÕES NAS TABELAS DO BANCO DE DADOS. 
+*/
+
+/* Somentes Consultas */
+
+select distinct 
+t.name as [table],
+st.last_user_update as [update]
+FROM sys.dm_db_index_usage_stats as st inner join sys.tables t  -- Para considerar só tabelas
+on st.object_id = t.object_id
+where  t.name not in ('MSsubscription_agents', 'MSreplication_subscriptions', 'CountRowsContainer')
+and st.database_id = db_id() and st.last_user_update is not null
+order by 2 desc
+
+/* Consultas e Alterações */
+
+;WITH Utilizacao (object_id, Index_ID, Seek, Scan, LookUp, [Update])
+As (
+SELECT
+    T.object_id, Index_Id,
+    last_user_seek, last_user_scan, last_user_lookup, last_user_update
+FROM sys.dm_db_index_usage_stats As I
+INNER JOIN sys.tables As T ON I.object_id = T.object_id
+WHERE database_id = DB_ID()),
+Referencias (object_id, DataReferencia, Operacao)
+As (
+SELECT object_id, DataReferencia, Operacao FROM Utilizacao
+UNPIVOT
+(DataReferencia FOR Operacao IN ([Seek], [Scan], [LookUp], [Update])) As UP),
+UltimoAcesso (object_id, UltimaData)
+As (
+SELECT object_id, MAX(DataReferencia) FROM Referencias
+GROUP BY object_id),
+UltimasOperacoes (object_id, UltimaData, Operacoes)
+As (
+SELECT U.*,
+    (SELECT DISTINCT Operacao FROM Referencias As R
+    WHERE U.object_id = R.object_id AND U.UltimaData = R.DataReferencia
+    FOR XML AUTO)
+ FROM UltimoAcesso As U)
+
+SELECT
+    Name As Tabela, UltimaData As UltimoAcesso,
+    REPLACE(REPLACE(Operacoes, '"/>',','),'<R Operacao="','') As UltimasOperacoes
+FROM sys.tables As T
+LEFT OUTER JOIN UltimasOperacoes As U ON T.object_id = U.object_id
+order by UltimoAcesso desc
+go

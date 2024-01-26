@@ -1,0 +1,43 @@
+IF (OBJECT_ID('tempdb..#Retorno') IS NOT NULL) DROP TABLE #Retorno
+CREATE TABLE #Retorno (
+    Job_Id UNIQUEIDENTIFIER,
+    Last_Run_Date INT,
+    Last_Run_Time INT,
+    Next_Run_Date INT,
+    Next_Run_Time INT,
+    Next_Run_Schedule_ID INT,
+    Requested_To_Run INT,
+    Request_Source INT,
+    Request_Source_ID VARCHAR(MAX),
+    Running BIT,
+    Current_Step INT,
+    Current_Retry_Attempt INT,
+    [State] SMALLINT
+)    
+    
+INSERT INTO #Retorno
+EXEC master.dbo.xp_sqlagent_enum_jobs 1, ''
+ 
+ 
+IF (OBJECT_ID('tempdb..#Resultado') IS NOT NULL) DROP TABLE #Resultado
+SELECT
+    Job_Id,
+    (CASE WHEN Last_Run_Date > 0 THEN msdb.dbo.agent_datetime(Last_Run_Date, Last_Run_Time) END) AS Dt_Ultima_Execucao,
+    (CASE WHEN Next_Run_Date > 0 THEN msdb.dbo.agent_datetime(Next_Run_Date, Next_Run_Time) END) AS Dt_Proxima_Execucao,
+    Next_Run_Schedule_ID,
+    Requested_To_Run,
+    Request_Source,
+    Request_Source_ID,
+    Running,
+    Current_Step,
+    Current_Retry_Attempt,
+    State
+INTO
+    #Resultado
+FROM
+    #Retorno
+WHERE
+    Running = 1 -- Em Execução
+    
+    
+SELECT * FROM #Resultado

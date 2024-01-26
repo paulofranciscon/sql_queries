@@ -1,0 +1,12 @@
+select 	name,  filename,
+	filegroup = filegroup_name(groupid),
+	'size' = convert(nvarchar(15), convert (bigint, size * 8) / 1024 * 100 /100)   + N' MB',
+	'maxsize' = (case maxsize when -1 then N'Unlimited'
+			else
+			convert(nvarchar(15), convert (bigint, maxsize) *8 / 1024 * 100 /100) + N' KB' end),
+	'growth' = (case status & 0x100000 when 0x100000 then
+		convert(nvarchar(3), growth) + N'%'
+		else
+		convert(nvarchar(15), convert (bigint, growth * 8) /1024 * 100 /100) + N' MB' end),
+	'usage' = (case status & 0x40 when 0x40 then 'log only' else 'data only' end)
+	from sysaltfiles;

@@ -1,0 +1,14 @@
+Verificar backup de log 
+
+USE TempDB
+GO
+DBCC FREEPROCCACHE
+GO
+DBCC DROPCLEANBUFFERS
+go
+DBCC FREESYSTEMCACHE ('ALL')
+GO
+DBCC FREESESSIONCACHE
+GO
+dbcc shrinkfile ('templog', 300)
+GO

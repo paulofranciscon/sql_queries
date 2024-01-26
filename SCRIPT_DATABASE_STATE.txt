@@ -1,0 +1,38 @@
+SELECT name, state_desc from sys.databases 
+GO
+
+
+SELECT name AS DatabaseName, state_desc AS DBStatus
+FROM sys.databases
+
+
+
+
+use master
+
+SELECT 
+d.name AS 'DBName'            
+, DATABASEPROPERTYEX (d.name,'Status') as 'DatabaseStatus'    
+ FROM                      
+sysdatabases d  
+WHERE DATABASEPROPERTYEX (d.name,'Status') <> 'ONLINE'
+ORDER BY                      
+d.name 
+
+
+
+USE master;
+
+SELECT name, 
+       CASE status 
+           WHEN 0 THEN 'Online'
+           WHEN 1 THEN 'Restoring'
+           WHEN 2 THEN 'Recovering'
+           WHEN 3 THEN 'Recovery Pending'
+           WHEN 4 THEN 'Suspect'
+           WHEN 5 THEN 'Emergency'
+           WHEN 6 THEN 'Offline'
+           WHEN 7 THEN 'Copying'
+	   WHEN 8 THEN 'Other'
+       END AS state_desc
+FROM sysdatabases;

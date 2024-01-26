@@ -1,0 +1,31 @@
+## ALTERE O ENDEREÇAMENTO DOS ARQUIVOS DENTRO DO SQL SERVER
+
+	ALTER DATABASE EcoPlus   
+		MODIFY FILE ( NAME = EcoPlus_Data,   
+					FILENAME = 'N:\MSSQL\EcoPlus_Data.mdf');
+
+	ALTER DATABASE EcoPlus   
+		MODIFY FILE ( NAME = EcoPlus_Index,   
+					FILENAME = 'N:\MSSQL\EcoPlus_Index.ndf');
+				  
+## DERRUBAR O BANCO
+
+	ALTER DATABASE EcoPlus SET OFFLINE;
+
+## CASO O COMANDO FALHE, USE A OPÇAO WITH ROLLBACK
+
+	ALTER DATABASE EcoPlus SET OFFLINE WITH ROLLBACK IMMEDIATE;  
+
+## COPIAR OS ARQUIVOS PARA O DESTINO
+
+	copie, por segurança
+
+## TRAZER O BANCO ONLINE NOVAMENTE
+
+	ALTER DATABASE EcoPlus SET ONLINE;  
+
+## FAZER A VALIDAÇÃO:
+
+	SELECT name, physical_name AS CurrentLocation, state_desc  
+	FROM sys.master_files  
+	WHERE database_id = DB_ID(N'EcoPlus');  

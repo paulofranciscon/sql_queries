@@ -1,0 +1,14 @@
+--List all effective permissions for user test in database AdventureWorks2019
+EXECUTE AS USER = 'test'
+GO
+USE AdventureWorks2019
+GO
+SELECT * FROM fn_my_permissions(null, 'database'); 
+GO
+
+sp_configure 'show advanced options', 1;  
+	RECONFIGURE;
+	GO        
+sp_configure 'clr strict security', 1;
+RECONFIGURE;
+GO

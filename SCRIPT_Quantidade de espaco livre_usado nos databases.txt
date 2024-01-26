@@ -1,0 +1,31 @@
+--################################# Quantidade espaço livre/usado nos Databases #############################
+set nocount on;
+declare @tsql        as nvarchar(4000)
+declare @dbname      as nvarchar(100)
+-- database space usage
+declare curdatabases cursor local fast_forward for
+select name
+from master.dbo.sysdatabases
+order by dbid
+open curdatabases
+fetch next from curdatabases
+into @dbname
+while @@fetch_status = 0
+begin
+    set @tsql = N'use [' + @dbname + ']; ' +
+                  'select ''' + @dbname + ''' as DBName,
+                         FileID,
+                         ''AllocatedSizeinMB'' = cast(size/128.0 as numeric(15,2)),
+                         ''SpacedUsedinMB'' = cast(cast((cast(fileproperty(name, ''spaceused'' )as int)/128.0) as numeric(15,2))as nvarchar),
+                         ''SpacedUsedPCT'' = cast(((cast(fileproperty(name, ''spaceused'' )as int)/128.0)/(size/128.0) * 100) as numeric(5,2)),
+                         ''Usage'' = (case status & 0x40 when 0x40 then ''log'' else ''data'' end),
+                         ''MaxSizeinMB'' = (case maxsize when -1 then N''unlimited''  else cast(cast(maxsize as bigint) * 8 /1024 as nvarchar(15)) end),
+                         ''FileGrowthinMB'' = (case status & 0x100000 when 0x100000 then N'''' else cast(cast(growth as bigint) * 8 /1024 as nvarchar(15)) end),
+                         ''FileGrowthinPCT'' = (case status & 0x100000 when 0x100000 then cast(growth as nvarchar(15)) else N'''' end),
+                         FileName
+                  from [' + @dbname + N'].dbo.sysfiles'
+    exec sp_executesql @tsql
+    fetch next from curdatabases
+    into @dbname
+end;
+

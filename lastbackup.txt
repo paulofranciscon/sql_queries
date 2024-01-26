@@ -1,0 +1,14 @@
+-- Validate Last Backup--
+select convert(char(20),SERVERPROPERTY('ServerName')) as Servername
+select substring(d.name,1,50) as 'Database Name', CASE b.type
+          WHEN 'D' THEN 'BACKUP FULL'
+              WHEN 'I' THEN 'BACKUP DIFFERENCIAL'
+          WHEN 'L' THEN 'LOG'
+          WHEN 'F' THEN 'FILE OR FILEGROUP'
+           ELSE 'NO BACKUP'
+      END as Type
+,max(b.backup_start_date) as 'Backup Date'
+from master..sysdatabases d left join msdb..backupset b on d.name = b.database_name
+     where d.name not in ('model','tempdb', 'pubs', 'Northwind' )
+ --  and b.backup_start_date is null
+     group by d.name, type order by d.name

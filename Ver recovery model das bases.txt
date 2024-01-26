@@ -1,0 +1,2 @@
+SELECT Name, DATABASEPROPERTYEX(Name,'RECOVERY') AS [Recovery Model]
+FROM master.dbo.sysdatabases

@@ -1,0 +1,8 @@
+PARA IDENTIFICAR LOGS
+
+SELECT DB.name, cast((size * 8 / 1024.0) as decimal(10,2)) AS [Tamanho em MB] FROM sys.databases DB
+INNER JOIN sys.master_files
+ON DB.database_id = sys.master_files.database_id
+where type_desc = 'LOG' 
+and db.database_id > 4
+order by 2 desc

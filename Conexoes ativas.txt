@@ -1,0 +1,7 @@
+SELECT  getdate() DataHora, DB_NAME(es.database_id) As DatabaseSQL, es.[program_name], es.[host_name],esc.client_net_address, es.login_name, COUNT(esc.session_id) AS [connection count]  
+FROM sys.dm_exec_sessions AS es WITH (NOLOCK)
+INNER JOIN sys.dm_exec_connections AS esc WITH (NOLOCK)
+ON es.session_id = esc.session_id
+GROUP BY esc.client_net_address, es.[program_name], es.[host_name], es.login_name ,DB_NAME(es.database_id)
+ORDER BY [connection count] DESC OPTION (RECOMPILE);
+--ORDER BY ec.client_net_address, es.[program_name] OPTION (RECOMPILE);

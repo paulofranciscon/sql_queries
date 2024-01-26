@@ -1,0 +1,29 @@
+SELECT 
+   [rs].[destination_database_name], 
+   [rs].[restore_date], 
+   [bs].[backup_start_date], 
+   [bs].[backup_finish_date], 
+   [bs].[database_name] as [source_database_name], 
+   [bmf].[physical_device_name] as [backup_file_used_for_restore]
+FROM msdb..restorehistory rs
+INNER JOIN msdb..backupset bs ON [rs].[backup_set_id] = [bs].[backup_set_id]
+INNER JOIN msdb..backupmediafamily bmf ON [bs].[media_set_id] = [bmf].[media_set_id] 
+--where destination_database_name = 'CASAV_28089_RHH'
+ORDER BY [rs].[restore_date] DESC
+
+-- Essa query retorna informações relevantes sobre ultimos restores que foram feitos e informações sobre sua origem, como:
+/*
+
+destination_database_name | restore_date | backup_start_date | backup_finish_date | source_database_name | backup_file_used_for_restore | 
+CASAV_28089_RHH           |2022-03-29 14:55 | 2022-03-29 14:43 | 2022-03-29 14:43 | CASAV_28089_RHP      |   B:\BKP\CASAV_28089_RHP.bak |
+
+
+*/
+
+
+-----------------------------------------------------------------------------------
+Script para trazer informacoes sobre os ultimos backups restaurados na instancia.
+
+Como: destination_database_name | restore_date | backup_start_date | backup_finish_date | source_database_name | backup_file_used_for_restore |
+
+Muito bom utilizar em cenarios aonde voce tem duvida se restaurou ou foi restaurado o arquivo de backup correto.

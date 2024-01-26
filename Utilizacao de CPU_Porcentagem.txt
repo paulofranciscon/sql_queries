@@ -1,0 +1,23 @@
+WITH ScheduleMonitorResults AS
+(
+SELECT
+DATEADD(ms,
+(select [timestamp]-[ms_ticks] from sys.dm_os_sys_info),
+GETDATE()) AS 'EventDateTime',
+CAST(record AS xml) AS 'record'
+FROM sys.dm_os_ring_buffers
+WHERE ring_buffer_type = 'RING_BUFFER_SCHEDULER_MONITOR'
+AND [timestamp] >
+(select [ms_ticks] - 60*60000 -- Last 5 minutes
+- 100 -- Round up
+from sys.dm_os_sys_info)
+)
+SELECT
+CONVERT (varchar, EventDateTime, 120) AS EventTime,
+SysHealth.value('ProcessUtilization[1]','int') AS 'CPU (SQL Server)',
+100 - SysHealth.value('SystemIdle[1]','int') AS 'CPU (All Processes)'
+FROM ScheduleMonitorResults CROSS APPLY
+record.nodes('/Record/SchedulerMonitorEvent/SystemHealth') T(SysHealth)
+where CONVERT (varchar, EventDateTime, 120) between '2022-05-05 15:45:48' and '2022-05-05 16:45:48'
+--where 100 - SysHealth.value('SystemIdle[1]','int') >70
+ORDER BY EventDateTime DESC

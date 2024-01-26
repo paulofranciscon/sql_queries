@@ -1,0 +1,39 @@
+Como criar um usuario de BD Oracle para acesso com schema e tabela para leitura e escrita:
+
+-- criar o user (sempre verificar em qual tabela o schema esta)
+CREATE USER APS_GEMEO IDENTIFIED BY APS#GEMEO#23# DEFAULT TABLESPACE TSAPS_PROD QUOTA UNLIMITED ON TSAPS_PROD PASSWORD EXPIRE;
+
+-- conceder SYS privs
+GRANT CONNECT, RESOURCE, CREATE SESSION TO APS_GEMEO;
+
+-- conceder TAB privs
+GRANT SELECT, INSERT, UPDATE, DELETE ON APS_PROD_GD.GEMEO_CG_SCHEDULE TO APS_GEMEO;
+
+Como verificar se deu certo criar o usuario
+SQL> select grantee, privilege, table_name from dba_tab_privs where grantee='APS_GEMEO';
+
+GRANTEE                                                                                                                          PRIVILEGE       TABLE_NAME
+-------------------------------------------------------------------------------------------------------------------------------- --------------- ----------------------------------------
+APS_GEMEO                                                                                                                        DELETE          GEMEO_CG_SCHEDULE
+APS_GEMEO                                                                                                                        INSERT          GEMEO_CG_SCHEDULE
+APS_GEMEO                                                                                                                        SELECT          GEMEO_CG_SCHEDULE
+APS_GEMEO                                                                                                                        UPDATE          GEMEO_CG_SCHEDULE
+
+SQL> select GRANTEE,PRIVILEGE from dba_sys_privs where grantee='APS_GEMEO';
+
+GRANTEE   PRIVILEGE
+--------- ---------------
+APS_GEMEO CREATE SESSION
+
+SQL> select GRANTEE, GRANTED_ROLE from dba_role_privs where grantee='APS_GEMEO';
+
+GRANTEE
+--------------------------------------------------------------------------------------------------------------------------------
+GRANTED_ROLE
+--------------------------------------------------------------------------------------------------------------------------------
+APS_GEMEO
+RESOURCE
+
+APS_GEMEO
+CONNECT
+SQL>

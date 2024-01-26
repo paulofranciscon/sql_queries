@@ -1,0 +1,46 @@
+
+--Change the database name
+USE PMIS2
+GO
+DECLARE @FileSize varchar(20),
+	@LogicalFile varchar(50),
+	@TargetFileSize int,
+	@NewFileSize varchar(20),
+ 	@IncrementSize int
+
+
+---Logical name of Database file to shrink
+SET @LogicalFile = 'PMis1_0001_Data11'
+
+---This is the desired target size in MB after the shrink operation.
+SET @TargetFileSize = 328000
+
+---The increment amount in MB the file will shrink by in each pass (e.g. 128)
+SET @IncrementSize = 1024
+
+
+SET @FileSize = (SELECT [Size]/128 FROM dbo.Sysfiles WHERE [name] = @LogicalFile)
+
+
+SET @NewFileSize = @FileSize -@IncrementSize
+
+
+WHILE @FileSize > @TargetFileSize
+
+BEGIN
+
+BEGIN
+
+EXEC ('DBCC SHRINKFILE ' + '(N' + '''' + @LogicalFile +'''' + ', ' + @NewFileSize + ')')
+
+Print '1 GB liberado'
+
+END
+
+SET @FileSize = (SELECT [Size]/128 FROM dbo.Sysfiles WHERE [name] = @LogicalFile)
+
+SET @NewFileSize = @FileSize -@IncrementSize
+
+END
+
+GO

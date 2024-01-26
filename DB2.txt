@@ -1,0 +1,190 @@
+COMANDOS DB2
+------------------------------------------------------
+Verificar instancias do servidor
+cat /etc/passwd|grep -i db2
+------------------------------------------------------
+LISTA OS BANCOS DE DADOS
+db2 list db directory
+------------------------------------------------------
+Listar DBs ativos
+db2 list active databases
+------------------------------------------------------
+Verificar o log do banco
+db2diag -f
+------------------------------------------------------
+CONECTA NO BANCO DE DADOS
+db2 connect to [nome do banco]
+------------------------------------------------------
+DESATIVAR BANCO
+###db2 deactivate db [nome do banco]
+------------------------------------------------------
+INTERFACE DO DB2
+db2top -d [nome do banco]
+------------------------------------------------------
+Verificar licença
+db2licm -l 
+------------------------------------------------------
+VERIFICAR PORCENTAGEM DE USO DOS LOGS
+db2 "select * from sysibmadm.LOG_UTILIZATION"
+------------------------------------------------------
+Verificar LOCKS do banco
+db2 list applications show detail |grep -i lock
+
+OUTROS COMANDOS PARA VER LOCKS
+
+db2pd -locks wait -db nomedb
+
+db2 get snapshot for application agentid [ID] | more
+
+OU
+
+db2 connect to crdc_dup
+db2 -r lock-wait.out  " SELECT AGENT_ID, LOCK_MODE, LOCK_OBJECT_TYPE, AGENT_ID_HOLDING_LK,  LOCK_MODE_REQUESTED FROM TABLE(SNAP_GET_LOCKWAIT('',-1)) AS T  "
+
+db2 -r lock-wait.out  " select char(DB_NAME,12) DB_NAME , APPL_STATUS, char(CLIENT_NNAME,25) CLIENT_NNAME, CHAR(APPL_NAME,30) APPL_NAME , AGENT_ID,  STATUS_CHANGE_TIME from SYSIBMADM.APPLICATIONS where AGENT_ID IN ( select AGENT_ID_HOLDING_LK FROM SYSIBMADM.SNAPLOCKWAIT group by AGENT_ID_HOLDING_LK )   ORDER BY STATUS_CHANGE_TIME ASC "
+------------------------------------------------------
+SCRIPT DE MONITORAMENTO DB2 AUTOMATIC
+crontab -l
+------------------------------------------------------
+Verifica backups em andamento
+db2 list utilities show detail
+------------------------------------------------------
+Testar conexão com TSM
+dsmc q ses -optfile=$DSMI_CONFIG
+------------------------------------------------------
+Verifica schedule de backups
+dsmc q sched -optfile=$DSMI_CONFIG
+------------------------------------------------------
+Verificar erro do codigo SQL
+db2 "? SQLCODE"
+------------------------------------------------------
+Cria novo arquivo e zipa o antigo
+db2diag -A
+------------------------------------------------------
+Verificar erros na log do banco
+db2diag -gi "level=severe" -H 1d
+db2diag -gi "level=fatal" -H 1d
+db2diag -gi "level=error" -H 1d
+------------------------------------------------------
+Verificar backups armazenados no tsm e valida conexao com tsm
+db2adutl query
+
+db2adutl query db [nome do banco]
+------------------------------------------------------
+Verificar se instancia esta no ar
+db2pd -
+Database Member 0 -- Active -- Up 52 days 03:46:50 -- Date 2022-04-04-20.01.43.388519
+
+db2gcf -s -i DB2
+------------------------------------------------------
+Verificar se instancia esta no ar
+db2gcf -s -i DB2DEV
+------------------------------------------------------
+Realizar forçar arquive
+db2 archive log for database [nome do banco]
+------------------------------------------------------
+Realizar checklist dos bancos
+db2 connect to [nome do banco]
+
+db2 -l chklst_%COMPUTERNAME%.log -z chklst_%COMPUTERNAME%.out  "select SNAPSHOT_TIMESTAMP, char(TBSP_TYPE,10) TBSP_TYPE,  TBSP_CONTENT_TYPE,TBSP_USING_AUTO_STORAGE, char(TBSP_STATE,20) TBSP_STATE, char(TBSP_NAME,40) TBSP_NAME from SYSIBMADM.TBSP_UTILIZATION "
+
+db2 -l chklst_%COMPUTERNAME%.log -z chklst_%COMPUTERNAME%.out  " select SNAPSHOT_TIMESTAMP, char(DB_NAME,8) DB_NAME,  DBPARTITIONNUM, char(DB_STORAGE_PATH,50) DB_STORAGE_PATH,  DB_STORAGE_PATH_STATE ,  FS_TOTAL_SIZE, FS_USED_SIZE , STO_PATH_FREE_SIZE from sysibmadm.SNAPSTORAGE_PATHS  "
+
+db2 -l chklst_%COMPUTERNAME%.log -z chklst_%COMPUTERNAME%.out "select CURRENT TIMESTAMP TimeStamp, COUNT(*) Total_Tbspaces, CHAR(TBSP_STATE,20) TBSP_STATE FROM SYSIBMADM.TBSP_UTILIZATION group by TBSP_STATE"
+
+db2 -l chklst_%COMPUTERNAME%.log -z chklst_%COMPUTERNAME%.out " select member,  int(total_log_used/1024/1024) as Log_Used_Meg,        int(total_log_available/1024/1024) as Log_Space_Free_Meg,        int((float(total_log_used) /float(total_log_used+total_log_available))*100)        as Percent_Used,int(tot_log_used_top/1024/1024) as Max_Log_Used_Meg,       int(sec_logs_allocated) as Secondaries from sysibmadm.snapdb "
+
+------------------------------------------------------
+Verificar o quanto o Db2 está consumindo de memória
+db2pd -dbptnmem | head -20
+------------------------------------------------------
+Verificar se tablespaces são auto resize
+db2pd -db nomebanco -tablespaces
+
+Exemplo:
+db2pd -db TWS -tablespaces
+------------------------------------------------------
+Verificar tempo que gerenciador do banco está no ar
+db2 get snapshot for database manager | grep -i "Start"
+
+WINDOWS
+db2 get snapshot for database manager | findstr "Start"
+------------------------------------------------------
+Informa o timestamp
+db2 get monitor switches | grep -i timestamp
+------------------------------------------------------
+Verificar se banco é HADR(cluster)
+db2pd -d [nome do banco] -HADR
+
+Exemplo:
+db2pd -d CRDC_BIL -HADR
+------------------------------------------------------
+Verificar RESTORE PENDENTE
+db2 get db cfg for CRDC_DUP |grep -i pen
+------------------------------------------------------
+Verificar versão do DB2
+db2level
+------------------------------------------------------
+CONECTAR INSTANCIA WINDOWS
+db2ilist
+set DB2INSTANCE=nome mostrado no ilist
+------------------------------------------------------
+Mostrar instancia conectada
+db2 get instance
+------------------------------------------------------
+Listar tablespaces e seus respectivos status
+db2 "select apply_qual, set_name, status, lastrun, lastsuccess from asn.ibmsnap_subs_set where activate=1 order by lastrun"
+
+--OU
+
+db2 "select SNAPSHOT_TIMESTAMP, char(TBSP_TYPE,10) TBSP_TYPE,  TBSP_CONTENT_TYPE, TBSP_USING_AUTO_STORAGE, char(TBSP_STATE,20) TBSP_STATE, char(TBSP_NAME,40) TBSP_NAME from SYSIBMADM.TBSP_UTILIZATION "
+
+-- Verificar tablespace com erro
+db2 "select apply_qual, set_name, status, lastrun, lastsuccess , REFRESH_TYPE from asn.ibmsnap_subs_set where activate=1 and status <> 0 order by lastrun"
+
+--Verifica status das table spaces(findstr comando do windows/grep no linux)
+db2 connect to [NOME DO BANCO DE DADOS]
+db2 list tablespaces show detail | grep State
+------------------------------------------------------
+Resetar conexão com TSM
+db2pd -db <dbname> -fvp lam1 term
+------------------------------------------------------
+Verificar arquivo de configuração de archives do TSM
+db2 get db cfg for [nome do banco] | grep -i log
+
+!!!!!!!Update no metodo de log archive do TSM!!!!!!!!!!
+db2 update db cfg using [valor apresentado nos parenteses com TSM depois do igual] TSM immediate
+------------------------------------------------------
+Verificar log archives
+db2pd -d [Banco] -logs
+------------------------------------------------------
+Rodar Backup online manualmente
+db2 backup database [Banco] online use tsm
+------------------------------------------------------
+Verificar log transacional e id da transação atual
+db2 get snapshot for database on CRDC_DUP | egrep "Log space available|Log space used by|Appl id holding|Log to be redone for recovery"
+------------------------------------------------------
+Verificar informações da transação presa
+db2 get snapshot for application agentid [id retornado]
+------------------------------------------------------
+Listar usuarios no linux: 
+getent passwd | cut -d \: -f1 |grep -i USERID
+
+Listar usuarios no unix
+cat /etc/passwd |grep -i USERID
+------------------------------------------------------
+Verificar config da crontab, caso de erro de permissão, mandar para UNIX
+crontab -l
+------------------------------------------------------
+Rodar scripts em DB2
+Do lado do DB2, tendo o SQL Script com o final de comando sendo " ; " , é só rodar : 
+db2 -tvf <SQL_Script>.sql -l <arquivo_log>.log -r <arquivo_output.out  
+
+A sintaxe "-tvf", é 
+
+t = terminador de comando default ( ; ) 
+
+v = output na tela ;
+
+f =  path + arquivo SQL 
+------------------------------------------------------

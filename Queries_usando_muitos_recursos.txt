@@ -1,0 +1,81 @@
+declare @rc int
+declare @TraceID int
+declare @maxfilesize bigint
+set @maxfilesize = 5
+ 
+exec @rc = sp_trace_create @TraceID output, 0, N'InsertFileNameHere', @maxfilesize, NULL 
+if (@rc != 0) goto error
+ 
+-- Set the events
+declare @on bit
+set @on = 1
+-- eventid 10 = "RPC:Completed"
+-- eventid 12 = "SQL:BatchCompleted"
+-- columnid 1 = "TextData"
+-- columnid 10 = "ApplicationName"
+-- columnid 6 = "NTUserName"
+-- columnid 11 = "LoginName"
+-- columnid 12 = "SPID"
+-- columnid 13 = "Duration"
+-- columnid 14 = "StartTime"
+-- columnid 15 = "EndTime"
+-- columnid 16 = "Reads"
+-- columnid 17 = "Writes"
+-- columnid 18 = "CPU"
+exec sp_trace_setevent @TraceID, 10, 1, @on
+exec sp_trace_setevent @TraceID, 10, 10, @on
+exec sp_trace_setevent @TraceID, 10, 6, @on
+exec sp_trace_setevent @TraceID, 10, 11, @on
+exec sp_trace_setevent @TraceID, 10, 12, @on
+exec sp_trace_setevent @TraceID, 10, 13, @on
+exec sp_trace_setevent @TraceID, 10, 14, @on
+exec sp_trace_setevent @TraceID, 10, 15, @on
+exec sp_trace_setevent @TraceID, 10, 16, @on
+exec sp_trace_setevent @TraceID, 10, 17, @on
+exec sp_trace_setevent @TraceID, 10, 18, @on
+exec sp_trace_setevent @TraceID, 12, 1, @on
+exec sp_trace_setevent @TraceID, 12, 11, @on
+exec sp_trace_setevent @TraceID, 12, 6, @on
+exec sp_trace_setevent @TraceID, 12, 10, @on
+exec sp_trace_setevent @TraceID, 12, 12, @on
+exec sp_trace_setevent @TraceID, 12, 13, @on
+exec sp_trace_setevent @TraceID, 12, 14, @on
+exec sp_trace_setevent @TraceID, 12, 15, @on
+exec sp_trace_setevent @TraceID, 12, 16, @on
+exec sp_trace_setevent @TraceID, 12, 17, @on
+exec sp_trace_setevent @TraceID, 12, 18, @on
+ 
+-- Set the Filters
+declare @intfilter int
+declare @bigintfilter bigint
+ 
+exec sp_trace_setfilter @TraceID, 10, 0, 7, N'SQL Server Profiler - b3d074d2-d348-4984-9c60-d07bd25123a3'
+ 
+-- columnid 13 = "Duration"
+set @bigintfilter = 3000000
+exec sp_trace_setfilter @TraceID, 13, 0, 4, @bigintfilter
+ 
+-- columnid 16 = "Reads"
+set @bigintfilter = 5000
+exec sp_trace_setfilter @TraceID, 16, 0, 4, @bigintfilter
+ 
+-- columnid 17 = "Writes"
+set @bigintfilter = 1000
+exec sp_trace_setfilter @TraceID, 17, 0, 4, @bigintfilter
+ 
+-- columnid 18 = "CPU"
+set @intfilter = 1000
+exec sp_trace_setfilter @TraceID, 18, 0, 4, @intfilter
+ 
+-- Set the trace status to start
+exec sp_trace_setstatus @TraceID, 1
+ 
+-- display trace id for future references
+select TraceID=@TraceID
+goto finish
+ 
+error: 
+select ErrorCode=@rc
+ 
+finish: 
+go

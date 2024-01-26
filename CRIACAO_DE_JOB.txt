@@ -1,0 +1,98 @@
+USE [NomeDoBancoDeDados]
+GO
+
+EXEC msdb.dbo.sp_add_job
+    @job_name = N'NomeDoJob',
+    @enabled = 1,
+    @description = N'Descrição do Job'
+GO
+
+EXEC msdb.dbo.sp_add_jobstep
+    @job_name = N'NomeDoJob',
+    @step_name = N'NomeDoStep',
+    @subsystem = N'TSQL',
+    @command = N'EXEC NomeDaStoredProc',
+    @retry_attempts = 5,
+    @retry_interval = 5
+GO
+
+EXEC msdb.dbo.sp_add_jobserver
+    @job_name = N'NomeDoJob',
+    @server_name = N'(local)'
+GO
+
+
+
+
+
+
+
+USE msdb;
+
+ 
+
+EXEC dbo.sp_add_schedule  
+  @schedule_name = N'sch_Audit_SPC0',  
+  @enabled = 1,                      
+  @freq_type = 4,                   
+  @freq_interval = 1,               
+  @active_start_time = 60000,       
+  @active_end_time = 235959;
+
+ 
+
+
+DECLARE @jobId UNIQUEIDENTIFIER;
+
+ 
+
+EXEC dbo.sp_add_job  
+  @job_name = N'job_Audit_SPC0',    
+  @enabled = 1,              
+  @description = N'Audit para login SPC0 conforme solicitacao da SR12658574',    
+  @job_id = @jobId OUTPUT;   
+
+ 
+
+ 
+
+EXEC dbo.sp_add_jobstep  
+  @job_id = @jobId,           
+  @step_name = N'Select na tabela CONEXOES_TESTE',       
+  @subsystem = N'TSQL',        
+  @command = N'EXEC select * from CONEXOES_TESTE;', 
+  @on_success_action = 1,      
+  @on_fail_action = 2;         
+
+ 
+
+ 
+
+EXEC dbo.sp_attach_schedule  
+  @job_id = @jobId,           
+  @schedule_name = N'job_schedule_Audit_SPC0';
+
+
+MANUALMENTE
+
+
+Abra o SQL Server Management Studio e conecte-se ao servidor desejado.
+Na barra de ferramentas superior, clique em "SQL Server Agent" e em seguida "Jobs".
+Clique com o botão direito do mouse em "Jobs" e selecione "New Job".
+Na guia "General", insira um nome para o job e, se necessário, uma descrição. Selecione a opção "Enabled" para habilitar o job.
+Na guia "Steps", clique em "New" para adicionar um novo passo ao job.
+Na janela "New Job Step", insira um nome para o passo e, na seção "Type", selecione "Transact-SQL script (T-SQL)".
+Na seção "Database", selecione o banco de dados desejado.
+Na seção "Command", insira o código T-SQL que deseja executar. Por exemplo:
+css
+Copy code
+USE [MeuBancoDeDados]
+GO
+SELECT * FROM [MinhaTabela]
+Na guia "Schedules", clique em "New" para criar um novo agendamento.
+Na janela "New Job Schedule", insira um nome para o agendamento e selecione a opção "Recurring".
+Especifique a frequência com que o job deve ser executado, por exemplo, "Occurs every 5 minutes".
+Na seção "Duration", selecione a opção "End date" e especifique a data e hora em que o job deve parar de ser executado, por exemplo, "15 days after start date".
+Na guia "Advanced", selecione a opção "Output file" e insira o caminho e nome do arquivo de log, por exemplo, "C:\Logs\MeuJobLog.txt".
+Clique em "OK" para salvar as alterações e fechar a janela.
+Com essas configurações, o job será executado a cada 5 minutos por um período de 15 dias e o resultado da consulta T-SQL será impresso no arquivo de log especificado. Certifique-se de que a conta de serviço do SQL Server Agent tenha permissão para escrever no arquivo de log especificado.

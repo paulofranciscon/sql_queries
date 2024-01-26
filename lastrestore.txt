@@ -1,0 +1,11 @@
+USE MSDB
+GO
+SELECT
+    [destination_database_name] AS [DatabaseName],
+    MAX([restore_date]) AS [LastRestoreDate]
+FROM
+    [msdb].[dbo].[restorehistory]
+GROUP BY
+    [destination_database_name]
+ORDER BY
+    [destination_database_name];
